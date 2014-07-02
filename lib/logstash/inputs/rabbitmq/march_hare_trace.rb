@@ -9,15 +9,15 @@ class LogStash::Inputs::RabbitMQTrace
     
     
     def format_for(content_type)
-      if !content_type.nil? then        
+      if !content_type.nil? then
         for format in @formats.keys do
           escaped = Regexp.escape(format).gsub('\*','.*?')
           regex = Regexp.new "^#{escaped}$", Regexp::IGNORECASE
-          return @formats[format] if (content_type =~ regex)
-        end         
+          return @formats[format] if (content_type =~ regex)          
+        end
       end          
       
-      return "raw"
+      return "binary"
     end
     
     def converter_for(content_encoding) 
@@ -43,7 +43,6 @@ class LogStash::Inputs::RabbitMQTrace
             event["payload"] = {format => msg}
           end          
         rescue => e
-          @logger.warn("can not decode data", :error => e)
           event["message"] = "Undecodable Binary data"
         end
       end
@@ -54,18 +53,33 @@ class LogStash::Inputs::RabbitMQTrace
       end
     end
     
+    def to_ruby(obj)
+      if obj.respond_to?(:to_hash) then
+        hash = {}
+        obj.to_hash.each_pair {|key, value| hash[key.to_s] = to_ruby(value) }
+        hash
+      elsif obj.respond_to?(:to_a) then
+        arr = []
+        obj.to_a.each { |item| arr <<= to_ruby(item) }
+        arr
+      else
+        obj
+      end
+    end
+    
     def create_event(metadata, data)
       headers =  metadata.properties.headers
       if !headers.nil? then
         original_exchange = headers["exchange_name"].to_s
         if !@excluded_exchanges.include?(original_exchange) then
                   
-          if metadata.routing_key.start_with?("publish.")
+          routing_key = metadata.routing_key.to_s
+          if routing_key.start_with?("publish.")
             action = "publish"
             queue = nil
-          elsif metadata.routing_key.start_with?("deliver.")  
+          elsif routing_key.start_with?("deliver.")
             action = "deliver"
-     	      queue = metadata.routing_key[8..-1]
+     	      queue = routing_key[8..-1]
           end
         
           if @actions.include?(action) && (queue.nil? || !@excluded_queues.include?(queue)) then
@@ -77,17 +91,16 @@ class LogStash::Inputs::RabbitMQTrace
             event["action"] = action
           
             if @include_metadata then
-              event["queue"] = queue unless queue.nil?        
+              event["queue"] = queue unless queue.nil?
             
-              event["exchange"] = original_exchange          
+              event["exchange"] = original_exchange
             
-              event["routing_keys"] = headers["routing_keys"].to_a
-              event["node"] = headers["node"]
+              event["routing_keys"] = to_ruby(headers["routing_keys"])
+              event["node"] = headers["node"].to_s
               
               original_headers = original_properties["headers"] || {}
               
-              properties = original_properties.to_hash            
-              properties["headers"] = original_headers.to_hash
+              properties = to_ruby(original_properties)
               event["properties"] = properties            
             end
             return event

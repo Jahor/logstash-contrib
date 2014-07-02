@@ -52,7 +52,7 @@ class LogStash::Inputs::RabbitMQTrace < LogStash::Inputs::RabbitMQ
   # Optional.
   #
   # List of actions to trace
-  config :actions, :validate => :array, :default => ["publish", "delivery"]
+  config :actions, :validate => :array, :default => ["publish", "deliver"]
   
   # Optional.
   #
@@ -64,7 +64,11 @@ class LogStash::Inputs::RabbitMQTrace < LogStash::Inputs::RabbitMQ
   #   any other - put text in event.payload.{format}
   # 
   # * Wildcards are valid on content types.
-  config :formats, :validate => :hash, :default => {"application/json" => "json", "text/*" => "text"}
+  config :formats, :validate => :hash, :default => {
+                                                      "application/*json*" => "json", 
+                                                      "application/*xml*" => "xml",
+                                                      "text/*" => "text"
+                                                    }
 
 
   def initialize(params)
