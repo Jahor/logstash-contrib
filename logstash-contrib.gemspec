@@ -15,8 +15,8 @@ Gem::Specification.new do |gem|
   gem.require_paths = ["lib"]
   gem.version       = LOGSTASH_VERSION
 
-  gem.add_runtime_dependency "rack"               #(MIT license)
-  gem.add_runtime_dependency "sinatra"            #(MIT license)
+  gem.add_runtime_dependency "rack"                             #(MIT license)
+  gem.add_runtime_dependency "sinatra"                          #(MIT license)
   gem.add_runtime_dependency "google-api-client"                #{Apache 2.0 license}
   gem.add_runtime_dependency "heroku"                           #(MIT license)
   gem.add_runtime_dependency "elasticsearch"                    #(Apache 2.0 license)
@@ -31,7 +31,7 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency "jdbc-sqlite3"                     #(MIT license)
   gem.add_runtime_dependency "rsolr"                            #(Apache 2.0 license)
   gem.add_runtime_dependency "jmx4r"                            #(Apache 2.0 license)
-  gem.add_runtime_dependency "fog", ["1.20.0"]                 #(MIT license)
+  gem.add_runtime_dependency "fog", ["1.20.0"]                  #(MIT license)
   gem.add_runtime_dependency "varnish-rb"                       #(MIT license)
 
   if RUBY_PLATFORM == 'java'
@@ -42,6 +42,12 @@ Gem::Specification.new do |gem|
 
   else
     gem.add_runtime_dependency "mysql2"   # For input drupal_dblog (MIT license)
+  end
+  
+  if RUBY_PLATFORM != 'java'
+    gem.add_runtime_dependency "bunny",      ["~> 1.1.8"]  #(MIT license)
+  else
+    gem.add_runtime_dependency "march_hare", ["~> 2.1.0"]  #(MIT license)
   end
 
 end
