@@ -62,8 +62,12 @@ class LogStash::Inputs::RabbitMQTrace
         arr = []
         obj.to_a.each { |item| arr <<= to_ruby(item) }
         arr
-      else
+      elsif obj.kind_of? Numeric
         obj
+      elsif !!obj == obj
+        obj
+      else
+        obj.to_s
       end
     end
     
